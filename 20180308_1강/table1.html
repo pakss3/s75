@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<!-- HTML5 Hello world by kirupa - http://www.kirupa.com/html5/getting_your_feet_wet_html5_pg1.htm -->
+<html lang="ko-kr">
+<head>
+<meta charset="utf-8">
+<title>table1...</title>
+<style>
+table, th, td {border : 1px solid red;}
+ 
+</style>
+</head>
+<body>
+    <div id="tbl"></div>
+    <script>
+    /*
+        71_1.json 파일에 있는 데이터를 읽어서 dom에 table을 만든다
+        
+    */
+    'use strict';
+    
+          const Table = (function(){
+                const Private = Symbol();
+                return class{
+                    constructor(parent){
+                        /*
+                            받은 인자에 대한 유효성 검사 
+                            throw 를 이용할 것
+                            1. parent가 없거나 엘리먼트가 존재하지 않을경우 체크
+                            2. parent가 있을경우 private에 객체를 넣을 것 
+                        */
+                        if(typeof parent instanceof String || !parent ) throw "부모가 존재 하지 않습니다";
+                        this[Private] = {parent};
+                    }
+                    async load(url){
+                        /*
+                            url이 유효한지 확인
+                            비동기 형태로 데이터를 받아옴
+                            데이터를 받아왔는지 확인
+                        */
+                       /* 
+                        fetch(url).then(response=>{
+                            return response.json();
+                            
+                        }).then(json=>{
+                            this._render();
+                        });
+                        */
+                        
+                        const response = await fetch(url);
+                        if(!response.ok) throw "response not ok";
+                        
+                        const json = await response.json();
+                        const {title, header, items} = json;
+                        if(!items.length) throw "no items";
+                        
+                        Object.assign(this[Private],{title, header, items});
+                        this._render();     //인자로 넘기면 안됨, 이것은 클래스이기 때문에 객체는 내부적인 상태 값들을 통해서 연산을 진행하는 것이 맞음 
+                    }
+                    
+                    _render(){
+                         /*
+                            json에서 읽어온 데이터 가져오기
+                            부모 엘리먼트 찾기 
+                            부모엘리먼트 찾고 table 엘리먼트 생성
+                            테이블 캡션 title넣기
+                            thead 에 header값 넣기
+                            td넣기
+                         */
+                         const fields = this[Private],
+                               parent = document.querySelector(fields.parent);
+                            if(!parent) throw "invalid parent";
+                            if(!fields.items || !fields.items.length){
+                                parent.innerHTML = "no data";
+                            }else parent.innerHTML = "";
+                            
+                        const table = document.createElement("table");        
+                        const caption = document.createElement("caption");
+                                parent.appendChild(table);
+                                caption.innerHTML = fields.title;
+                                table.appendChild(caption);
+                        const thead = document.createElement("thead");
+                              fields.header.reduce((thead, header)=>{
+                                  let th = document.createElement("th");
+                                      th.innerHTML += header;    
+                                      thead.appendChild(th);
+                                    return thead;   
+                              }, thead);
+                              table.append(thead); 
+                        const tbody = document.createElement("tbody");
+                            fields.items.reduce((tbody, items)=>{
+                                let tr = document.createElement("tr");
+                                let td = items.reduce((tr, items)=>{
+                                    let td = document.createElement("td")
+                                        td.innerHTML += items; 
+                                        tr.appendChild(td);
+                                    return tr;
+                                },tr);
+                                
+                                tbody.appendChild(tr);
+                                return tbody;
+                                
+                            },tbody);
+                             table.append(tbody); 
+                            
+                    }
+                }
+        }());
+    
+        let table = new Table("#tbl");
+            table.load("71_1.json");
+        
+        
+  
+    </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!-- HTML5 Hello world by kirupa - http://www.kirupa.com/html5/getting_your_feet_wet_html5_pg1.htm -->
+<html lang="ko-kr">
+<head>
+<meta charset="utf-8">
+<title>table2...</title>
+<style>
+table, th, td {border : 1px solid red;}
+ 
+</style>
+</head>
+<body>
+data supply<br>
+↓<br>
+data<br> 
+(xml | json | csv)<br>
+↓↓<br>
+render<br>    
+↓↓<br>
+native bind<br>
+(table renderer | svg renderer | canvas renderer)<br>    
+
+<br>
+    <div id="tbl"></div>
+    <script>
+    'use strict';
+        const Info = class{
+            constructor(json){
+                /*
+                    data를 받아서 데이터 해체
+                    각 요소별 valid
+                    
+                */
+                let {title, header, items} = json;
+                if(typeof title != "string" || !title) throw "title 이 문자열이 아닙니다.";
+                if(!Array.isArray(header) || !header.length) throw "header 이 배열이 아닙니다.";
+                if(!Array.isArray(items) || !items.length) throw "items 이 배열이 아닙니다.";
+                
+                //1번 과제 추가 부분입니다.
+                if(items.filter(item=>{ return item.length != header.length }).length > 0) //throw "items의 형식이 잘못되었습니다.";
+                items = this._itemSizeVaild(items, header);
+                //1번 끝
+                this._private = {title, header, items}
+            }
+            get title(){ return this._private.title;}
+            get header(){ return this._private.header;}
+            get items(){ return this._private.items;}
+            
+            _itemSizeVaild(items, header){
+                return items.filter(item=>{ return item.length == header.length });
+            }
+            
+        }
+        
+
+        
+        const Data = class{ // data supply
+            async getData(){
+                /* throw "data를 바로 호출할 수 없습니다."; */
+                const data = await this._getData();
+                return new Info(data);
+            }
+        };
+        
+        
+        const jsonData = class extends Data{    // data supply
+            constructor(data){
+                super();
+                this._data = data;
+            }
+            async _getData(){
+                /*
+                  값을 가져옴, 이미 가져왔으면 캐쉬 갖고 온것에 대해서 전달
+                */
+                if(typeof this._data == "string"){
+                    const response = await fetch(this._data);
+                    return response.json();
+                }else return this._data;
+            }
+        };
+        
+        
+        const Renderer = class{
+            constructor(){}
+            async render(data){
+                if(!(data instanceof Data)) throw "형이 잘못됐습니다.";
+              
+               this._info = await data.getData(); //data 안에 title이 있는것에 대한 보장이 되지 않음
+               /*console.log(info.title, info.header, info.items);*/
+               this._render();
+            } 
+            _render(){
+                throw "renderer객체를 직접 구현해주세요.";
+            }
+            
+        };
+        const TableRenderer = class extends Renderer{
+            constructor(parent){
+                if(typeof parent != "string" || !parent ) throw "부모가 존재 하지 않습니다";
+                super();
+                 this._parent = parent;
+            }
+            _render(){
+                  const parent = document.querySelector(this._parent),
+                        fields = this._info;
+                        
+                        parent.innerHTML = "";
+                        
+                        const [table, caption] = "table,caption".split(",").map(v=>document.createElement(v));
+                                parent.appendChild(table);
+                                caption.innerHTML = fields.title;
+                                table.appendChild(caption);
+             
+                              table.append(fields.header.reduce((thead, head)=>
+                                    (thead.appendChild(document.createElement("th")).innerHTML += head, thead), 
+                              document.createElement("thead"))); 
+                     
+                             table.append(fields.items.reduce((tbody, items)=>{
+                                return (tbody.appendChild(items.reduce((tr, item)=>
+                                        (tr.appendChild(document.createElement("td")).innerHTML += item, tr)    
+                                ,document.createElement("tr")))), tbody;
+                                
+                            }, document.createElement("tbody"))); 
+            }
+            
+        }
+        
+        //host
+        const data = new jsonData("71_1.json");
+      
+        const renderer = new TableRenderer("#tbl");
+              renderer.render(data);
+    
+    </script>
+</body>
+</html>
