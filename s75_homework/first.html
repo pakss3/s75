@@ -36,7 +36,7 @@ native bind<br>
                 if(!Array.isArray(header) || !header.length) throw "header 이 배열이 아닙니다.";
                 if(!Array.isArray(items) || !items.length) throw "items 이 배열이 아닙니다.";
                 
-                //1번 과제 추가 부분입니다.
+                //1번 과제 추가 부분입니다.(1번밖에 풀지 못했습니다.)
                 if(items.filter(item=>{ return item.length != header.length }).length > 0) //throw "items의 형식이 잘못되었습니다.";
                 items = this._itemSizeVaild(items, header);
                 //1번 끝
